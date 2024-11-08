@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psikotes</title>
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+  }
+
+  .container {
+    max-width: 800px;
+    width: 100%;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+  }
+
+  h1 {
+    color: #333;
+  }
+
+  .question {
+    margin: 20px 0;
+  }
+
+  .options {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .options label {
+    display: block;
+    margin: 5px 0;
+  }
+
+  .correct-answer {
+    color: green;
+    font-weight: bold;
+  }
+
+  .explanation {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 8px;
+    display: none;
+  }
+
+  button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background-color: #555;
+  }
+
+  #resultContainer {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  /* Other existing CSS */
+
+  #fireworksContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    z-index: 1000;
+  }
+
+  @keyframes fireworkExplosion {
+    0% {
+      transform: scale(0.5);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  .firework-particle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: absolute;
+    animation: fireworkExplosion 1s ease-out forwards;
+  }
+
+  #catPopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    flex-direction: column;
+    color: #fff;
+  }
+
+  #catPopup img {
+    width: 400px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  #catPopup p {
+    margin-top: 20px;
+    font-size: 1.5em;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pertanyaan Psikotes buat Rechii</h1>
+    <form id="quizForm">
+      <div id="questionsContainer"></div>
+      <button type="button" onclick="submitQuiz()">Udahan</button>
+    </form>
+    <div id="resultContainer"></div>
+    <div id="popupContainer"></div>
+  </div>
+
+	<div id="catPopup" class="cat-popup" onclick="hideCatPopup()">
+	  <img id="catImage" src="" alt="Cat Image">
+	  <p id="catMessage"></p>
+	</div>
+
+  <script>
+    const questions = [
+      {
+        question: "Suatu seri: 100-4-90-7-80 seri selanjutnya adalah…",
+        options: ["8", "9", "10", "11", "12"],
+        answer: "10",
+        explanation: "Polanya itu ngurangin 10 terus nambah 3"
+      },
+      {
+        question: "Suatu seri: 50-40-31-24-18 seri selanjutnya adalah…",
+        options: ["16", "15", "14", "16", "12"],
+        answer: "16",
+        explanation: "Polanya itu ngurangin dari 10 terus makin kesana makin kecil"
+      },
+      {
+        question: "Suatu seri: 9-5-1-2-10-6-2-3-11-7 seri selanjutnya adalah…",
+        options: ["3", "4", "12", "8", "7"],
+        answer: "3",
+        explanation: "Polanya itu -4 -4 +1 +8 ygy"
+      },
+      {
+        question: "Suatu seri: 13-14-13-14-11-12-11-12-15-16-15-16-13 seri selanjutnya adalah…",
+        options: ["11-15-13", "12-16-14", "14-13-14", "14-15-13", "13-14-13"],
+        answer: "14-13-14",
+        explanation: "Polanya +1 -1 +1 -1 (-3/+3). Gitu aja terus ampe mabok"
+      },
+      {
+        question: "Jika 7x + 2 = 37, berapa nilai x…",
+        options: ["6", "5", "4", "3", "2"],
+        answer: "5",
+        explanation: "7x5 = 35 terus ditambah 2 jadi 37 muahahahaa"
+      },
+      {
+        question: "60% dari 9000 yaitu…",
+        options: ["3600", "5400", "6300", "7200", "8100"],
+        answer: "5400",
+        explanation: "Biar cepet bisa 10% dari 9000 itu kan 900, terus 900x6 itu ya 5400"
+      },
+      {
+        question: "Jika (3x – 1) / 4 = 2, maka x…",
+        options: ["2", "3", "4", "5", "6"],
+        answer: "3",
+        explanation: "(3 x 3 - 1) = (9 - 1) / 4 = 8 / 4 = 2 anjay gw gak tau lu ngerti apa kagak sama penjelasan gw"
+      },
+      {
+        question: "RELATIF =",
+        options: ["Biasa", "Ukuran", "Nisbi", "Statis", "Pasti"],
+        answer: "Nisbi",
+        explanation: "'Relatif itu gak mutlak, sinonimnya ya nisbi (bahasa arab coy)"
+      },
+      {
+        question: "RENOVASI =",
+        options: ["Pemagaran", "Pemugaran", "Pembongkaran", "Peningkatan", "Pemekaran"],
+        answer: "Pemugaran",
+        explanation: "'Renovasi itu memperbaiki, sinonimnya itu pemugaran atau bisa disebut restoration"
+      },
+      {
+        question: "ANTARIKSAWAN RUSIA =",
+        options: ["Astronomi", "Atronomika", "Kosmonout", "Astronesia", "Astronout"],
+        answer: "Astronout",
+        explanation: "Antariksawan Rusia itu disebut Astronout kalo di Indonesia"
+      },
+      {
+        question: "BALAI YASA =",
+        options: ["Rumah Sakit", "Rumah makan", "Aula", "Ruang Pertemuan", "Bengkel Lokomotif"],
+        answer: "Bengkel Lokomotif",
+        explanation: "Balai yasa tu buat ngelakuin perawatan perkeretaapian, jadi ya bisa disebut bengkel lokomotif"
+      },
+      {
+        question: "PSEUDONYM =",
+        options: ["Nama Asli", "Nama Samaran", "Nama Lengkap", "Bukan Asli", "Padanan Kata"],
+        answer: "Nama Samaran",
+        explanation: "Pesudonym itu kata lain dari nama samaran, gw bingung juga jelasin lebih lanjutnya bjir"
+      },
+      {
+        question: "JASA BOGA =",
+        options: ["Pelayanan Desain Rumah", "Seni Merias", "Penyewaan Pakaian Pengantin", "Pakaian Adat", "Katering"],
+        answer: "Katering",
+        explanation: "Jasa boga itu ya yang masak masak, jadi ada hubungannya lah sama katering, kan gak mungkin gitu malah jadi penyewaan pakaian pengantin"
+      },
+      {
+        question: "GAMBARAN =",
+        options: ["Dimensi", "Citra", "Imajinasi", "Bentuk", "Penampakan"],
+        answer: "Citra",
+        explanation: "Gambaran bisa juga digambarin sebagai citra atau representasi sesuatu anjay"
+      },
+      {
+        question: "PRESTISE =",
+        options: ["Unggul", "Elite", "Martabat", "Berkah", "Pilihan"],
+        answer: "Unggul",
+        explanation: "Prestise itu artinya keunggulan atau reputasi yang tinggi"
+      },
+      {
+        question: "KONFRONTASI =",
+        options: ["Perdebatan", "Perbedaan", "Pertandingan", "Pertikaian", "Persaingan"],
+        answer: "Persaingan",
+        explanation: "Konfrontasi itu persaingan atau bentrokan, apalagi"
+      },
+      {
+        question: "DEDUKSI =",
+        options: ["Transduksi", "Intuisi", "Reduksi", "Konduksi", "Induksi"],
+        answer: "Intuisi",
+        explanation: "Deduksi itu proses menarik kesimpulan secara logis, dengan kata lain intuisi coy"
+      },
+      {
+        question: "PROMINEM =",
+        options: ["Setuju", "Pelopor", "Pendukung", "Biasa", "Terkemuka"],
+        answer: "Terkemuka",
+        explanation: "Prominem itu terkenal atau terkemuka, sama kayak eminem"
+      },
+      {
+        question: "EPILOG ><",
+        options: ["Menolong", "Dialog", "Hipolog", "Analog", "Prolog"],
+        answer: "Prolog",
+        explanation: "Epilog itu bagian akhir dari cerita, kebalikan dari prolog"
+      },
+      {
+        question: "SUMBANG ><",
+        options: ["Laras", "Imbang", "Kokoh", "Mirip", "Tepat"],
+        answer: "Tepat",
+        explanation: "Sumbang itu gak sesuai atau gak tepat, jadi ya lawan katanya tepat"
+      },
+      {
+        question: "NOMADIK ><",
+        options: ["Menetap", "Anomali", "Tak teratur", "Sesuai norma", "Mapan"],
+        answer: "Menetap",
+        explanation: "Nomadik itu berarti berpindah-pindah, kebalikan dari menetap"
+      },
+      {
+        question: "BONGSOR =",
+        options: ["Susut", "Macet", "Menumpuk", "Kerdil", "Tertua"],
+        answer: "Kerdil",
+        explanation: "Bongsor berarti besar, lawan kata dari kerdil atau boncel (nama kucingnya Rechii)"
+      },
+      {
+        question: "PAKAR ><",
+        options: ["Awam", "Cendekia", "Mahir", "Spesialis", "Acuh"],
+        answer: "Awam",
+        explanation: "Pakar itu ahli (masa sih gak tau), terus awam itu kebalikannya yaituh tidak memiliki keahlian"
+      },
+      {
+        question: "ORATOR ><",
+        options: ["Pemirsa", "Pemikir", "Pendengar", "Pembicara", "Penceramah"],
+        answer: "Pendengar",
+        explanation: "Orator itu orang yang berbicara, kebalikan dari pendengar"
+      },
+      {
+        question: "DINAMIS ><",
+        options: ["Pasif", "Statis", "Kondusif", "Apatis", "Pragmatis"],
+        answer: "Statis",
+        explanation: "Dinamis berarti bergerak, lawan katanya adalah statis (contoh statis itu ya website ini)"
+      },
+      {
+        question: "NETRAL ><",
+        options: ["Terikat", "Bertentangan", "Bergabung", "Berpihak", "Terpadu"],
+        answer: "Berpihak",
+        explanation: "Netral itu ya gak berpihak atau gak milih salah satu sisi"
+      },
+      {
+        question: "LUGAS ><",
+        options: ["Apatis", "Berlebihan", "Apa adanya", "Mengada-ada", "Keras"],
+        answer: "Apatis",
+        explanation: "Lugas itu apa adanya (seperti aku mencintaimu apa adanya anjayy), kebalikannya itu apatis yang berarti acuh tak acuh."
+      },
+      {
+        question: "MUHIBAH ><",
+        options: ["Kunjungan", "Persahabatan", "Kenegaraan", "Karya wisata", "Kemalangan"],
+        answer: "Kemalangan",
+        explanation: "Muhibah (muhibah ya cok bukan musibah) itu dalam bahasa arab artinya persahabatan atau kunjungan baik"
+      },
+      {
+        question: "NARATIF ><",
+        options: ["Puisi", "Prosa", "Perkembangan", "Bersifat menguraikan", "Sistem"],
+        answer: "Puisi",
+        explanation: "Naratif itu cerita atau uraian, lawan katanya ya puisi"
+      },
+      {
+        question: "HARMONI ><",
+        options: ["Alat musik", "Serasi", "Percakapan", "Perselisihan", "Merdu"],
+        answer: "Perselisihan",
+        explanation: "Harmoni itu keselarasan, lawan katanya ya perselisihan"
+      },
+      {
+        question: "SEKULER ><",
+        options: ["Tradisional", "Lemah", "Duniawi", "Ilmiah", "Keagamaan"],
+        answer: "Keagamaan",
+        explanation: "Sekuler itu terpisah dari agama, lawannya ya keagamaan"
+      },
+      {
+        question: "REGULAR ><",
+        options: ["Teratur", "Tidak teratur", "Tetap", "Biasa", "Komunikasi"],
+        answer: "Tidak teratur",
+        explanation: "Regular itu teratur, lawan katanya ya tidak teratur (gw dah bingung harus ngasih tambahan penjelasan apalagi bjir wkwkwwk)"
+      },
+      {
+        question: "LIBERAL ><",
+        options: ["Bebas", "Terbuka", "Menerima", "Terbatas", "Permisif"],
+        answer: "Terbatas",
+        explanation: "Liberal itu terbuka, lawannya ya terbatas"
+      },
+      {
+        question: "UTOPIA ><",
+        options: ["Angan-angan", "Cita-cita", "Mimpi", "Maya", "Nyata"],
+        answer: "Nyata",
+        explanation: "Utopia (ganteng ganteng serigala) itu artinya khayalan, lawannya ya nyata."
+      },
+      {
+        question: "KRUSIAL ><",
+        options: ["Perpecahan", "Peradaban", "Beruntung", "Sepele", "Nyata"],
+        answer: "Sepele",
+        explanation: "Krusial itu penting coy (seperti lu), lawannya katanya ya sepele."
+      }
+    ];
+
+
+    function loadQuestions() {
+      const questionsContainer = document.getElementById("questionsContainer");
+      questions.forEach((q, index) => {
+        const questionDiv = document.createElement("div");
+        questionDiv.classList.add("question");
+
+        const questionText = document.createElement("p");
+        questionText.textContent = `${index + 1}. ${q.question}`;
+        questionDiv.appendChild(questionText);
+
+        const optionsList = document.createElement("ul");
+        optionsList.classList.add("options");
+
+        q.options.forEach(option => {
+          const optionItem = document.createElement("li");
+          const optionLabel = document.createElement("label");
+          const optionInput = document.createElement("input");
+          
+          optionInput.type = "radio";
+          optionInput.name = `question${index}`;
+          optionInput.value = option;
+          
+          optionLabel.appendChild(optionInput);
+          optionLabel.appendChild(document.createTextNode(option));
+          optionItem.appendChild(optionLabel);
+          optionsList.appendChild(optionItem);
+        });
+
+        questionDiv.appendChild(optionsList);
+
+        const explanationText = document.createElement("p");
+        explanationText.classList.add("explanation");
+        explanationText.id = `explanation${index}`;
+        explanationText.textContent = `Penjelasan: ${q.explanation}`;
+        questionDiv.appendChild(explanationText);
+
+        questionsContainer.appendChild(questionDiv);
+      });
+    }
+    function submitQuiz() {
+      let score = 0;
+      questions.forEach((q, index) => {
+        const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+        const explanationElement = document.getElementById(`explanation${index}`);
+
+        if (selectedOption) {
+          if (selectedOption.value === q.answer) {
+            score++;
+            selectedOption.parentElement.classList.add("correct-answer");
+          } else {
+            document.querySelector(`input[name="question${index}"][value="${q.answer}"]`).parentElement.classList.add("correct-answer");
+          }
+        } else {
+          document.querySelector(`input[name="question${index}"][value="${q.answer}"]`).parentElement.classList.add("correct-answer");
+        }
+
+        explanationElement.style.display = "block";
+      });
+
+      const resultContainer = document.getElementById("resultContainer");
+      resultContainer.textContent = `Benernya ${score} dari ${questions.length} pertanyaan`;
+
+      showPopup(score / questions.length);
+    }
+
+    function showPopup(percentage) {
+      const catImage = document.getElementById("catImage");
+      const catMessage = document.getElementById("catMessage");
+      const popupContainer = document.getElementById("popupContainer");
+      popupContainer.innerHTML = '';
+
+      if (percentage < 0.5) {
+        popupContainer.textContent = "Semangat Rechii !!! Skor lu masih dibawah 50%.";
+        catImage.src = "https://media.tenor.com/u8M7kk5ZXmwAAAAM/banana-cat-crying.gif";
+        catMessage.textContent = "Uhuhuhuhu !!! Skornya kurang dari 50% !!! 😭😭😭";
+      } else if (percentage < 0.75) {
+        popupContainer.textContent = "Anjay mantap !!! Skor lu diatas 50%!";
+        catImage.src = "https://media.tenor.com/DE72MznZMqgAAAAM/cat.gif";
+        catMessage.textContent = "Lumayan lahhh !!! Skornya lebih dari 50% !!! Muahahaha";
+      } else if (percentage < 0.9) {
+        popupContainer.textContent = "Widihh !!! Skor lu diatas 75%!";
+        catImage.src = "https://media.tenor.com/UTrLSr85tYEAAAAM/happy-cat-cat.gif";
+        catMessage.textContent = "Yippie yippie yippie !!! Skornya lebih dari 75% !!! 😁👍";
+      } else {
+        popupContainer.textContent = "Gila coy! Skor lu diatas 90%!";
+        catImage.src = "https://i.pinimg.com/originals/dc/dd/45/dcdd45bc02f89241babe4ab61ce69f01.gif";
+        catMessage.textContent = "Wawwwww !!! Skornya lebih dari 90% !!! Uwu Uwu Uwu 🎉";
+      }
+
+      const catPopup = document.getElementById("catPopup");
+      catPopup.style.display = "flex";
+    }
+
+    function hideCatPopup() {
+      const catPopup = document.getElementById("catPopup");
+      catPopup.style.display = "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", loadQuestions);
+  </script>
+</body>
+</html>
