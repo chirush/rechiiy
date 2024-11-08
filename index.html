@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psikotes</title>
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+  }
+
+  .container {
+    max-width: 800px;
+    width: 100%;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+  }
+
+  h1 {
+    color: #333;
+  }
+
+  .question {
+    margin: 20px 0;
+  }
+
+  .options {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .options label {
+    display: block;
+    margin: 5px 0;
+  }
+
+  .correct-answer {
+    color: green;
+    font-weight: bold;
+  }
+
+  .explanation {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 8px;
+    display: none;
+  }
+
+  button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background-color: #555;
+  }
+
+  #resultContainer {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  /* Other existing CSS */
+
+  #fireworksContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    z-index: 1000;
+  }
+
+  @keyframes fireworkExplosion {
+    0% {
+      transform: scale(0.5);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  .firework-particle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: absolute;
+    animation: fireworkExplosion 1s ease-out forwards;
+  }
+  /* Other existing CSS */
+
+  #catPopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    flex-direction: column;
+    color: #fff;
+  }
+
+  #catPopup img {
+    width: 400px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  #catPopup p {
+    margin-top: 20px;
+    font-size: 1.5em;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pertanyaan Psikotes buat Rechii</h1>
+    <form id="quizForm">
+      <div id="questionsContainer"></div>
+      <button type="button" onclick="submitQuiz()">Udahan</button>
+    </form>
+    <div id="resultContainer"></div>
+    <div id="popupContainer"></div>
+  </div>
+
+	<div id="catPopup" class="cat-popup" onclick="hideCatPopup()">
+	  <img id="catImage" src="" alt="Cat Image">
+	  <p id="catMessage"></p>
+	</div>
+
+  <script>
+    const questions = [
+    {
+      question: "Merdeka = .....",
+      options: ["Pesta", "Luas", "Belenggu", "Hiruk", "Bebas"],
+      answer: "Bebas",
+      explanation: "Merdeka itu artinya bebas, atau bisa juga berdiri sendiri (dari penjajahan, dan sebagainya)"
+    },
+    {
+      question: "Taraf = ....",
+      options: ["Jejak", "Cacat", "Derajat", "Hidup", "Anggaran"],
+      answer: "Derajat",
+      explanation: "Taraf itu artinya tingkatan atau dengan kata lain derajat"
+    },
+    {
+      question: "Rabat = ....",
+      options: ["Pencairan", "Potongan", "Penggandaan", "Pengurangan", "Penyimpangan"],
+      answer: "Potongan",
+      explanation: "Rabat itu artinya potongan harga atau diskon coy, makanya belanja di tokopedia jangan shopee terus"
+    },
+    {
+      question: "Terbenam >< .....",
+      options: ["Pasti", "Tenggelam", "Terkatung", "Terperosok", "Sial"],
+      answer: "Terkatung",
+      explanation: "Terbenam itu artinya tenggelam atau terkubur, lawan katanya ya terkatung atau terapung"
+    },
+    {
+      question: "Preman >< .....",
+      options: ["Pengawal", "Dinas", "Mafia", "Partikelir", "Sendiri"],
+      answer: "Dinas",
+      explanation: "Preman itu sebutan buat owang jaat termasuk penodong, pemeras, atau perampok. Lawan katanya ya dinas atau pegawai pemerintah/militer"
+    },
+    {
+      question: "Emas : Tambang || ...... : ....",
+      options: ["garam : logam", "permata : perhiasan", "kayu : pohon", "pramuka : seragam", "lidah : mulut"],
+      answer: "kayu : pohon",
+      explanation: "Kayu dihasilkan dari pohon, dan emas dihasilkan dari tambang"
+    },
+    {
+      question: "Motor : Roda || .... ; ....",
+      options: ["Rumah : fondasi", "Rumah : pintu", "Baju : kancing", "Buku : balpoin", "Buku : lembar"],
+      answer: "Rumah : fondasi",
+      explanation: "Motor dapat berjalan jika ada roda, sementara rumah akan berdiri jika ada fondasi, dan aku akan selalu ada jika ada kamu uwu (anjir apaan sih gw)"
+    },
+    {
+      question: "Askes (sekten) konsisten gemar (...) polemik",
+      options: ["Armmik", "Imkarm", "Kamrim", "Mikram", "Rammik"],
+      answer: "Rammik",
+      explanation: "Jujur gw bingung jelasinnya"
+    },
+    {
+      question: "Nakhoda (ohksin) nista, Vokatif (...) waduk",
+      options: ["Wadtak", "Dawita", "Itadaw", "Takdaw", "Itawad"],
+      answer: "Takdaw",
+      explanation: "Ini juga sama aokwoakokoaok"
+    },
+    {
+      question: "4 3 8 6 16 12 ...",
+      options: ["47", "32", "48", "49", "78"],
+      answer: "32",
+      explanation: "Polanya itu -1, *2+2 (nah 2 yang tambah nya itu berkelipatan, jadi next pola itu jadi 4, terus jadi 8)"
+    },
+    {
+      question: "192 192 96 32 ...",
+      options: ["4", "6", "8", "10", "12"],
+      answer: "8",
+      explanation: "Pertama dibagi 1, terus dibagi 2, terus dibagi 3, sampai dibagi 4"
+    },
+    {
+      question: "Jika jakarta adalah kuda, surabaya adalah sapi, dan makasar adalah ...",
+      options: ["Unggas", "Kelelawar", "Kenari", "Poksay", "Harimau"],
+      answer: "Harimau",
+      explanation: "Kuda sama sapi itu hewan berkaki 4. Terus di pilihan cuma ada harimau yang kakinya 4"
+    },
+    {
+      question: "Berani = ....",
+      options: ["Takut", "Gentar", "Tegar", "Kuat", "Lemah"],
+      answer: "Tegar",
+      explanation: "Aku yang dulu bukanlah yang sekarang (gak butuh penjelasan)"
+    },
+    {
+      question: "Gemar : Hobi || Takut : ....",
+      options: ["Seram", "Ragu", "Berani", "Malu", "Benci"],
+      answer: "Benci",
+      explanation: "Gemar itu berkaitan dengan hobi, terus kalo takut berkaitannya ya dengan benci"
+    },
+    {
+      question: "Energi = ....",
+      options: ["Listrik", "Daya", "Panas", "Penyimpanan", "Transformasi"],
+      answer: "Daya",
+      explanation: "Energi itu daya yang dapat berupa berbagai bentuk, seperti listrik atau panas"
+    },
+    {
+      question: "Senang >< ....",
+      options: ["Bahagia", "Suka", "Sedih", "Muram", "Terharu"],
+      answer: "Sedih",
+      explanation: "Bagaimana jika aku tidak baik baik saja (gak butuh penjelasan)"
+    },
+    {
+      question: "Pantang menyerah >< ....",
+      options: ["Ulet", "Tabah", "Kalah", "Cepat puas", "Pasrah"],
+      answer: "Cepat puas",
+      explanation: "Gak butuh penjelasan"
+    },
+    {
+      question: "Masalah : Solusi || Kesulitan : ....",
+      options: ["Pemecahan", "Sebab", "Penyakit", "Pertolongan", "Tujuan"],
+      answer: "Pertolongan",
+      explanation: "Masalah itu butuh solusi, terus kalo kesulitan itu butuh pertolongan, kalo aku butuh kamu anjay"
+    },
+    {
+      question: "Bangunan : Pondasi || Buku : ....",
+      options: ["Kertas", "Huruf", "Gambar", "Lembar", "Cerita"],
+      answer: "Lembar",
+      explanation: "Bangunan itu berdiri di atas pondasi, terus buku itu tersusun atas lembar-lembar kertas"
+    },
+    {
+      question: "Sehat >< ....",
+      options: ["Kuat", "Bugar", "Lemah", "Cergas", "Sakit"],
+      answer: "Sakit",
+      explanation: "Gak butuh penjelasan"
+    }
+  ];
+
+
+  function loadQuestions() {
+    const questionsContainer = document.getElementById("questionsContainer");
+    questions.forEach((q, index) => {
+      const questionDiv = document.createElement("div");
+      questionDiv.classList.add("question");
+
+      const questionText = document.createElement("p");
+      questionText.textContent = `${index + 1}. ${q.question}`;
+      questionDiv.appendChild(questionText);
+
+      const optionsList = document.createElement("ul");
+      optionsList.classList.add("options");
+
+      q.options.forEach(option => {
+        const optionItem = document.createElement("li");
+        const optionLabel = document.createElement("label");
+        const optionInput = document.createElement("input");
+        
+        optionInput.type = "radio";
+        optionInput.name = `question${index}`;
+        optionInput.value = option;
+        
+        optionLabel.appendChild(optionInput);
+        optionLabel.appendChild(document.createTextNode(option));
+        optionItem.appendChild(optionLabel);
+        optionsList.appendChild(optionItem);
+      });
+
+      questionDiv.appendChild(optionsList);
+
+      const explanationText = document.createElement("p");
+      explanationText.classList.add("explanation");
+      explanationText.id = `explanation${index}`;
+      explanationText.textContent = `Penjelasan: ${q.explanation}`;
+      questionDiv.appendChild(explanationText);
+
+      questionsContainer.appendChild(questionDiv);
+    });
+  }
+  function submitQuiz() {
+    let score = 0;
+    questions.forEach((q, index) => {
+      const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+      const explanationElement = document.getElementById(`explanation${index}`);
+
+      if (selectedOption) {
+        if (selectedOption.value === q.answer) {
+          score++;
+          selectedOption.parentElement.classList.add("correct-answer");
+        } else {
+          document.querySelector(`input[name="question${index}"][value="${q.answer}"]`).parentElement.classList.add("correct-answer");
+        }
+      } else {
+        document.querySelector(`input[name="question${index}"][value="${q.answer}"]`).parentElement.classList.add("correct-answer");
+      }
+
+      explanationElement.style.display = "block";
+    });
+
+    const resultContainer = document.getElementById("resultContainer");
+    resultContainer.textContent = `Benernya ${score} dari ${questions.length} pertanyaan`;
+
+    showPopup(score / questions.length);
+  }
+
+  function showPopup(percentage) {
+    const catImage = document.getElementById("catImage");
+    const catMessage = document.getElementById("catMessage");
+    const popupContainer = document.getElementById("popupContainer");
+    popupContainer.innerHTML = '';
+
+    if (percentage < 0.5) {
+      popupContainer.textContent = "Semangat Rechii !!! Skor lu masih dibawah 50%.";
+      catImage.src = "https://imgcdn.sigstick.com/F9Uo7Jls0PLi8OIQM2Ur/3-1.thumb128.png";
+      catMessage.textContent = "Bjir kok bisa !!! Skornya kurang dari 50% !!! 😭😭😭";
+    } else if (percentage < 0.75) {
+      popupContainer.textContent = "Anjay mantap !!! Skor lu diatas 50%!";
+      catImage.src = "https://i.pinimg.com/736x/da/41/6d/da416d4e35d347ee1500f5ac4d1893bc.jpg";
+      catMessage.textContent = "Lumayan lahhh !!! Skornya lebih dari 50% !!! Muahahaha";
+    } else if (percentage < 0.9) {
+      popupContainer.textContent = "Widihh !!! Skor lu diatas 75%!";
+      catImage.src = "https://preview.redd.it/komodos-kirim-reaction-image-stiker-wa-andalan-kalian-untuk-v0-kwao988q0yhd1.jpeg?width=540&format=pjpg&auto=webp&s=c0e0680366b10d50e4e2ff17e4feee3c507f366d";
+      catMessage.textContent = "Anjay boljug !!! Skornya lebih dari 75% !!! 😁👍";
+    } else {
+      popupContainer.textContent = "Gila coy! Skor lu diatas 90%!";
+      catImage.src = "https://i.pinimg.com/474x/d4/88/aa/d488aae9d5b77f1cfa34d0f9de799dd4.jpg";
+      catMessage.textContent = "Wawwwww !!! Skornya lebih dari 90% !!! Uuuu mantap, aku gigit nih";
+    }
+
+    const catPopup = document.getElementById("catPopup");
+    catPopup.style.display = "flex";
+  }
+
+  function hideCatPopup() {
+    const catPopup = document.getElementById("catPopup");
+    catPopup.style.display = "none";
+  }
+
+  document.addEventListener("DOMContentLoaded", loadQuestions);
+  </script>
+</body>
+</html>
