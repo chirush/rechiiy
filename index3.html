@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Psikotes</title>
+  <style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f4f4f4;
+  }
+
+  .container {
+    max-width: 800px;
+    width: 100%;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+  }
+
+  h1 {
+    color: #333;
+  }
+
+  .question {
+    margin: 20px 0;
+  }
+
+  .options {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .options label {
+    display: block;
+    margin: 5px 0;
+  }
+
+  .correct-answer {
+    color: green;
+    font-weight: bold;
+  }
+
+  .explanation {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 8px;
+    display: none;
+  }
+
+  button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background-color: #555;
+  }
+
+  #resultContainer {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  /* Other existing CSS */
+
+  #fireworksContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    z-index: 1000;
+  }
+
+  @keyframes fireworkExplosion {
+    0% {
+      transform: scale(0.5);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  .firework-particle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    position: absolute;
+    animation: fireworkExplosion 1s ease-out forwards;
+  }
+
+  #catPopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    flex-direction: column;
+    color: #fff;
+  }
+
+  #catPopup img {
+    width: 400px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  #catPopup p {
+    margin-top: 20px;
+    font-size: 1.5em;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pertanyaan Psikotes buat Rechii</h1>
+    <form id="quizForm">
+      <div id="questionsContainer"></div>
+      <button type="button" onclick="submitQuiz()">Udahan</button>
+    </form>
+    <div id="resultContainer"></div>
+    <div id="popupContainer"></div>
+  </div>
+
+	<div id="catPopup" class="cat-popup" onclick="hideCatPopup()">
+	  <img id="catImage" src="" alt="Cat Image">
+	  <p id="catMessage"></p>
+	</div>
+
+  <script>
+    const questions = [
+  {
+    question: "2, 4, 6, 8, 10, …",
+    options: ["13", "12", "24", "15", "16"],
+    answer: "12",
+    explanation: "Polanya +2"
+  },
+  {
+    question: "2, 5, 10, 17, 26, ...",
+    options: ["32", "35", "37", "24", "28"],
+    answer: "37",
+    explanation: "Polanya deret bilangan ganjil"
+  },
+  {
+    question: "26, 23, 30, 27,...., 31",
+    options: ["16", "23", "24", "31", "34"],
+    answer: "34",
+    explanation: "Polanya -3, +7"
+  },
+  {
+    question: "95, 90, 80, 65,....",
+    options: ["105", "115", "60", "45", "85"],
+    answer: "45",
+    explanation: "Polanya kelipatan -5"
+  },
+  {
+    question: "13, 18, 25, 34, 35,....",
+    options: ["15", "16", "28", "34", "38"],
+    answer: "38",
+    explanation: "Polanya bilangan ganjil dibawah 11, jadi +5, +7, +9, +1, +3"
+  },
+
+  {
+    question: "Dokter : Pasien = Guru : ...",
+    options: ["Papan tulis", "Sekolah", "Dosen", "Murid", "Buku"],
+    answer: "Murid",
+    explanation: "Dokter berhubungan dengan pasien sama kayak guru berhubungan dengan murid"
+  },
+  {
+    question: "Api : Panas = Es : ...",
+    options: ["Sejuk", "Mencair", "Beku", "Air", "Dingin"],
+    answer: "Dingin",
+    explanation: "Api berhubungan dengan panas sama kayak es berhubungan dengan dingin"
+  },
+  {
+    question: "Mata : Melihat = Telinga : ...",
+    options: ["Menyentuh", "Mendengar", "Merasa", "Menghidu", "Merangkul"],
+    answer: "Mendengar",
+    explanation: "Mata dipake buat melihat, sama kayak telinga dipake buat mendengar"
+  },
+  {
+    question: "Motor - Bensin = Pelari - ....",
+    options: ["Sepatu", "Vitamin", "Makanan", "Obat", "Juara"],
+    answer: "Makanan",
+    explanation: "Motor butuh bensin buat bahan bakarnya, sama kayak pelari butuh makanan"
+  },
+  {
+    question: "Televisi - Gambar = Radio - ....",
+    options: ["Gelombang", "Suara", "Channel", "Siaran", "Film"],
+    answer: "Suara",
+    explanation: "Televisi menghasilkan gambar, radio menghasilkan suara"
+  },
+
+  {
+    question: "ABSOLUT == ….",
+    options: ["Positif", "Abnormal", "Keras", "Mutlak"],
+    answer: "Mutlak",
+    explanation: "Absolut itu sesuatu yang mutlak atau pasti"
+  },
+  {
+    question: "ADAPTASI == ….",
+    options: ["Kesepakatan", "Keadaan", "Penggabungan", "Penyesuaian"],
+    answer: "Penyesuaian",
+    explanation: "Adaptasi itu menyesuaikan diri dengan lingkungan atau keadaan"
+  },
+  {
+    question: "ANGGARAN == ….",
+    options: ["Keuangan", "Laporan", "Aturan", "Pembelian"],
+    answer: "Keuangan",
+    explanation: "Anggaran itu rencana keuangan atau alokasi dana untuk suatu periode"
+  },
+  {
+    question: "AKREDITASI == ….",
+    options: ["Persamaan", "Kelembagaan", "Pengakuan", "Persyaratan"],
+    answer: "Pengakuan",
+    explanation: "Akreditasi itu proses pengakuan suatu lembaga berdasarkan standar tertentu"
+  },
+  {
+    question: "AKSELERASI == ….",
+    options: ["Percepatan", "Kecepatan", "Keindahan", "Perpaduan"],
+    answer: "Percepatan",
+    explanation: "Akselerasi itu percepatan atau peningkatan kecepatan"
+  },
+
+  {
+    question: "ABOLISI >< ….",
+    options: ["Keringanan", "Pemberatan", "Pengurangan", "Pemotongan"],
+    answer: "Pemberatan",
+    explanation: "Abolisi itu penghapusan, kebalikannya pemberatan atau penambahan hukuman"
+  },
+  {
+    question: "ABSEN >< ….",
+    options: ["Sakit", "Masuk", "Ijin", "Hadir"],
+    answer: "Hadir",
+    explanation: "Absen berarti tidak hadir, antonimnya hadir"
+  },
+  {
+    question: "AKTUAL >< ….",
+    options: ["Kadaluwarsa", "Nyata", "Lama", "Baru"],
+    answer: "Kadaluwarsa",
+    explanation: "Aktual itu terbaru atau saat ini, lawannya kadaluwarsa"
+  },
+  {
+    question: "AKURAT >< ….",
+    options: ["Teratur", "Sembarangan", "Ceroboh", "Meleset"],
+    answer: "Sembarangan",
+    explanation: "Akurat itu tepat, lawannya sembarangan"
+  },
+  {
+    question: "ANTAGONIS >< ….",
+    options: ["Setingkat", "Selaras", "Seimbang", "Searah"],
+    answer: "Selaras",
+    explanation: "Antagonis itu berlawanan atau bertentangan, lawannya selaras atau searah"
+  },
+  {
+    question: "Jika Santi pergi ke Candi Borobudur maka ia juga pergi ke Candi Prambanan. Jika Santi pergi ke Candi Prambanan maka Hesti pergi ke Malioboro. Hesti pergi ke Keraton Yogyakarta.",
+    options: [
+      "Santi dan Hesti pergi ke Keraton Yogyakarta",
+      "Santi pergi ke Candi Prambanan dan Malioboro",
+      "Hesti dan Santi pergi ke Candi Borobudur",
+      "Santi pergi ke Candi Borobudur dan Candi Prambanan",
+      "Santi tidak pergi ke Candi Borobudur"
+    ],
+    answer: "Santi tidak pergi ke Candi Borobudur",
+    explanation: "Jika pernyataan awal benar, Santi tidak akan pergi ke Candi Borobudur."
+  },
+  {
+    question: "Jika Siska menjadi juara lomba maka juara kedua adalah seorang laki-laki. Jika Jovan menjadi juara kedua maka yang menjadi juara ketiga adalah Ardi. Ardi menjadi urutan keempat.",
+    options: [
+      "Juara kedua dalam lomba adalah seorang perempuan",
+      "Siska mungkin menjadi juara lomba",
+      "Jovan masih bisa menjadi juara kedua lomba",
+      "Siska tidak mungkin menjadi juara lomba",
+      "Tidak bisa ditarik kesimpulan"
+    ],
+    answer: "Siska mungkin menjadi juara lomba",
+    explanation: "Tidak ada informasi pasti mengenai juara lomba; Siska mungkin saja menjadi juara."
+  },
+    ];
+
+
+    function loadQuestions() {
+      const questionsContainer = document.getElementById("questionsContainer");
+      questions.forEach((q, index) => {
+        const questionDiv = document.createElement("div");
+        questionDiv.classList.add("question");
+
+        const questionText = document.createElement("p");
+        questionText.textContent = `${index + 1}. ${q.question}`;
+        questionDiv.appendChild(questionText);
+
+        const optionsList = document.createElement("ul");
+        optionsList.classList.add("options");
+
+        q.options.forEach(option => {
+          const optionItem = document.createElement("li");
+          const optionLabel = document.createElement("label");
+          const optionInput = document.createElement("input");
+          
+          optionInput.type = "radio";
+          optionInput.name = `question${index}`;
+          optionInput.value = option;
+          
+          optionLabel.appendChild(optionInput);
+          optionLabel.appendChild(document.createTextNode(option));
+          optionItem.appendChild(optionLabel);
+          optionsList.appendChild(optionItem);
+        });
+
+        questionDiv.appendChild(optionsList);
+
+        const explanationText = document.createElement("p");
+        explanationText.classList.add("explanation");
+        explanationText.id = `explanation${index}`;
+        explanationText.textContent = `Penjelasan: ${q.explanation}`;
+        questionDiv.appendChild(explanationText);
+
+        questionsContainer.appendChild(questionDiv);
+      });
+    }
+    function submitQuiz() {
+      let score = 0;
+      questions.forEach((q, index) => {
+        const selectedOption = document.querySelector(`input[name="question${index}"]:checked`);
+        const explanationElement = document.getElementById(`explanation${index}`);
+
+        if (selectedOption) {
+          if (selectedOption.value === q.answer) {
+            score++;
+            selectedOption.parentElement.classList.add("correct-answer");
+          } else {
+            document.querySelector(`input[name="question${index}"][value="${q.answer}"]`).parentElement.classList.add("correct-answer");
+          }
+        } else {
+          document.querySelector(`input[name="question${index}"][value="${q.answer}"]`).parentElement.classList.add("correct-answer");
+        }
+
+        explanationElement.style.display = "block";
+      });
+
+      const resultContainer = document.getElementById("resultContainer");
+      resultContainer.textContent = `Benernya ${score} dari ${questions.length} pertanyaan`;
+
+      showPopup(score / questions.length);
+    }
+
+    function showPopup(percentage) {
+      const catImage = document.getElementById("catImage");
+      const catMessage = document.getElementById("catMessage");
+      const popupContainer = document.getElementById("popupContainer");
+      popupContainer.innerHTML = '';
+
+      if (percentage < 0.5) {
+        popupContainer.textContent = "Semangat Rechii !!! Skor lu masih dibawah 50%.";
+        catImage.src = "https://media.tenor.com/u8M7kk5ZXmwAAAAM/banana-cat-crying.gif";
+        catMessage.textContent = "Uhuhuhuhu !!! Skornya kurang dari 50% !!! 😭😭😭";
+      } else if (percentage < 0.75) {
+        popupContainer.textContent = "Anjay mantap !!! Skor lu diatas 50%!";
+        catImage.src = "https://media.tenor.com/DE72MznZMqgAAAAM/cat.gif";
+        catMessage.textContent = "Lumayan lahhh !!! Skornya lebih dari 50% !!! Muahahaha";
+      } else if (percentage < 0.9) {
+        popupContainer.textContent = "Widihh !!! Skor lu diatas 75%!";
+        catImage.src = "https://media.tenor.com/UTrLSr85tYEAAAAM/happy-cat-cat.gif";
+        catMessage.textContent = "Yippie yippie yippie !!! Skornya lebih dari 75% !!! 😁👍";
+      } else {
+        popupContainer.textContent = "Gila coy! Skor lu diatas 90%!";
+        catImage.src = "https://i.pinimg.com/originals/dc/dd/45/dcdd45bc02f89241babe4ab61ce69f01.gif";
+        catMessage.textContent = "Wawwwww !!! Skornya lebih dari 90% !!! Uwu Uwu Uwu 🎉";
+      }
+
+      const catPopup = document.getElementById("catPopup");
+      catPopup.style.display = "flex";
+    }
+
+    function hideCatPopup() {
+      const catPopup = document.getElementById("catPopup");
+      catPopup.style.display = "none";
+    }
+
+    document.addEventListener("DOMContentLoaded", loadQuestions);
+  </script>
+</body>
+</html>
